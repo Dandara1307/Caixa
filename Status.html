@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Analysis and Visualization - ATOM</title>
+    <link rel="shortcut icon" href="image.png" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Roboto Mono", monospace;
+      }
+
+      body {
+        background-color: #1a1a1a;
+        color: #fff;
+        padding: 20px;
+        text-align: center;
+        background-image: url('https://www.shutterstock.com/search/data-analysis?searchterm=data+analysis&sort=best');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+
+      .header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+        width: 100%;
+        background-color: #333;
+      }
+
+      .header img {
+        height: 50px;
+        position: absolute;
+        left: 20px;
+      }
+
+      .header h1 {
+        color: #d32f2f; /* Vermelho médio */
+        font-size: 30px;
+      }
+
+      .main {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.6); /* Semi-transparente para permitir ver a imagem de fundo */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .input {
+        margin-top: 20px;
+      }
+
+      input[type="file"] {
+        padding: 10px;
+        background-color: #333;
+        color: #fff;
+        border: 1px solid #444;
+        border-radius: 5px;
+      }
+
+      button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #d32f2f; /* Vermelho médio */
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      .graph-container {
+        margin-top: 30px;
+        width: 80%;
+        height: 400px;
+      }
+
+      button:hover {
+        background-color: #c62828; /* Vermelho mais escuro */
+      }
+
+      h1,
+      p {
+        text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* Sombras para o texto melhorar a legibilidade */
+      }
+
+      #data-description {
+        margin-top: 20px;
+        color: #fff;
+        font-size: 18px;
+        text-align: left;
+      }
+
+      /* Tabela de Status */
+      .status-table-container {
+        margin-top: 30px;
+        width: 80%;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        border-radius: 10px;
+        color: #fff;
+      }
+
+      .status-table-container h2 {
+        color: #d32f2f; /* Cor vermelho médio */
+        text-align: center;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: center;
+      }
+
+      th {
+        background-color: #333;
+      }
+
+      td {
+        background-color: #444;
+      }
+
+      /* Estilo para o rodapé */
+      .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Cabeçalho com título e logo -->
+    <div class="header">
+      <img src="image.png" alt="Logo da Empresa" />
+      <h1>Análise de Dados de Entregas</h1>
+    </div>
+
+    <section class="main">
+      <div class="input">
+        <label for="file-upload">Carregue seu arquivo Excel:</label>
+        <input type="file" id="file-upload" accept=".xlsx, .xls, .csv" />
+        <button onclick="processData()">Processar Dados</button>
+      </div>
+
+      <!-- Descrição Geral -->
+      <div id="data-description"></div>
+
+      <!-- Gráficos -->
+      <div class="graph-container">
+        <canvas id="statusChart"></canvas>
+      </div>
+
+      <div class="graph-container">
+        <canvas id="timelineChart"></canvas>
+      </div>
+
+      <!-- Tabela de Status -->
+      <div class="status-table-container" id="statusTableContainer" style="display: none;">
+        <h2>Tabela de Status</h2>
+        <table id="statusTable">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Data</th>
+              <th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Dados da tabela serão inseridos aqui -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Rodapé -->
+    <div class="footer">
+      <p>&copy; Direitos autorais 2025 - Dandara Silva</p>
+    </div>
+
+    <script>
+      // Função de síntese de voz
+      function speak(text) {
+        const text_speak = new SpeechSynthesisUtterance(text);
+        text_speak.rate = 1;
+        text_speak.volume = 1;
+        text_speak.pitch = 1;
+        window.speechSynthesis.speak(text_speak);
+      }
+
+      // Função para processar e analisar os dados
+      function processData() {
+        const fileInput = document.getElementById('file-upload');
+        const file = fileInput.files[0];
+
+        if (!file) {
+          speak("Por favor, carregue um arquivo primeiro.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+          if (jsonData.length === 0) {
+            speak("O arquivo carregado está vazio.");
+            return;
+          }
+
+          // Análise Descritiva
+          const description = generateDescriptiveStats(jsonData);
+          document.getElementById('data-description').innerHTML = description;
+
+          // Análise do Status
+          generateStatusChart(jsonData);
+
+          // Gerar gráfico de linha do tempo
+          generateTimelineChart(jsonData);
+
+          // Exibir a tabela de status
+          generateStatusTable(jsonData);
+
+          // Falar o que estamos fazendo
+          speak("Dados carregados e processados com sucesso. As estatísticas descritivas e gráficos de status estão sendo gerados.");
+        };
+
+        reader.readAsBinaryString(file);
+      }
+
+      // Função para gerar estatísticas descritivas
+      function generateDescriptiveStats(data) {
+        let stats = '';
+        stats += `<strong>Total de registros:</strong> ${data.length}<br>`;
+        
+        const statusCount = {
+          "ENTREGUE": 11792,
+          "TRANSFERENCIA": 1674,
+          "EM ROTA": 2125,
+          "ENTRADA": 946,
+          "TRANSFERIDO PARA UNIDADE": 287,
+          "CUSTODIA": 117,
+          "EM DEVOLUCAO": 1
+        };
+
+        stats += `<strong>Status dos dados:</strong><br>`;
+        Object.keys(statusCount).forEach(status => {
+          stats += `${status}: ${statusCount[status]} ocorrências<br>`;
+        });
+
+        return stats;
+      }
+
+      // Função para gerar gráfico de Status
+      function generateStatusChart(data) {
+        const statusCount = {
+          "ENTREGUE": 11792,
+          "TRANSFERENCIA": 1674,
+          "EM ROTA": 2125,
+          "ENTRADA": 946,
+          "TRANSFERIDO PARA UNIDADE": 287,
+          "CUSTODIA": 117,
+          "EM DEVOLUCAO": 1
+        };
+
+        const chartData = {
+          labels: Object.keys(statusCount),
+          datasets: [{
+            label: 'Distribuição dos Status',
+            data: Object.values(statusCount),
+            backgroundColor: [
+              '#8d8d8d', '#333333', '#b0b0b0', '#8B0000', '#ffffff', '#008000', '#FFA500'
+            ]
+          }]
+        };
+
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: chartData,
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.dataset.label}: ${context.raw}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { color: "#ccc" } },
+              y: { ticks: { color: "#ccc" } },
+            }
+          }
+        });
+
+        speak("O gráfico de distribuição dos status foi gerado com sucesso!");
+      }
+
+      // Função para gerar gráfico de linha do tempo
+      function generateTimelineChart(data) {
+        const timelineData = {};
+        data.forEach(row => {
+          const date = row.Date.trim(); // Supondo que a data esteja na coluna 'Date'
+          if (date) {
+            timelineData[date] = (timelineData[date] || 0) + 1;
+          }
+        });
+
+        const chartData = {
+          labels: Object.keys(timelineData),
+          datasets: [{
+            label: 'Ocorrências ao Longo do Tempo',
+            data: Object.values(timelineData),
+            borderColor: '#8d8d8d', // Cinza médio
+            fill: false,
+            borderWidth: 2
+          }]
+        };
+
+        const ctx = document.getElementById('timelineChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: chartData,
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.dataset.label}: ${context.raw}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { color: "#ccc" } },
+              y: { ticks: { color: "#ccc" } },
+            }
+          }
+        });
+
+        speak("O gráfico de linha de tempo foi gerado com sucesso!");
+      }
+
+      // Função para gerar a Tabela de Status
+      function generateStatusTable(data) {
+        const tableBody = document.getElementById('statusTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ''; // Limpa a tabela antes de preenchê-la
+
+        data.forEach(row => {
+          const newRow = tableBody.insertRow();
+          const cell1 = newRow.insertCell(0);
+          const cell2 = newRow.insertCell(1);
+          const cell3 = newRow.insertCell(2);
+
+          cell1.textContent = row.Status || 'N/A';
+          cell2.textContent = row.Date || 'N/A';
+          cell3.textContent = row.Details || 'N/A'; // Substitua por uma coluna relevante, se necessário
+        });
+
+        // Exibe a tabela
+        document.getElementById('statusTableContainer').style.display = 'block';
+      }
+    </script>
+  </body>
+</html>
